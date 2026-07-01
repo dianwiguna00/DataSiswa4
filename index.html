@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Input Nilai Siswa</title>
+
+<style>
+
+/* ===== GLOBAL ===== */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background: #f4f6f9;
+}
+
+.header {
+    background: #28a745;
+    color: white;
+    padding: 12px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.container {
+    padding: 10px;
+}
+
+.card {
+    background: white;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+}
+
+/* ===== INPUT & BUTTON ===== */
+select, input {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+}
+
+button {
+    width: 100%;
+    padding: 8px;
+    margin: 3px 0;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+}
+
+.btn-save { background: #28a745; }
+.btn-clear { background: #dc3545; }
+.btn-download { background: #007BFF; }
+
+/* ===== TABLE ===== */
+.table-container {
+    overflow-x: auto;
+}
+
+table {
+    min-width: 900px;
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 6px;
+    text-align: center;
+    font-size: 12px;
+}
+
+th {
+    background: #007BFF;
+    color: white;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">INPUT NILAI SISWA</div>
+
+<div class="container">
+
+<!-- ===== FORM ===== -->
+<div class="card">
+
+<select id="kelas" onchange="render()">
+<option>7A</option><option>7B</option><option>7C</option>
+<option>7D</option><option>7E</option><option>7F</option>
+<option>7G</option><option>7H</option><option>7I</option>
+</select>
+
+<input id="pertemuan" type="number" min="1" max="30" value="1" oninput="render()">
+
+<input id="kkmKelas" type="number" placeholder="KKM Kelas">
+
+<div style="display:flex;gap:5px;">
+<input id="search" placeholder="Cari nama siswa..." style="flex:1;">
+<button onclick="render()">Search</button>
+<button onclick="resetSearch()" style="background:#dc3545;">Reset</button>
+</div>
+
+<button class="btn-save" onclick="save()">Simpan</button>
+<button class="btn-clear" onclick="clearData()">Bersihkan</button>
+
+<!-- Download multi kelas -->
+<div class="kelas-box">
+<label><input type="checkbox" value="7A" class="kelasDownload">7A</label>
+<label><input type="checkbox" value="7B" class="kelasDownload">7B</label>
+<label><input type="checkbox" value="7C" class="kelasDownload">7C</label>
+<label><input type="checkbox" value="7D" class="kelasDownload">7D</label>
+<label><input type="checkbox" value="7E" class="kelasDownload">7E</label>
+<label><input type="checkbox" value="7F" class="kelasDownload">7F</label>
+<label><input type="checkbox" value="7G" class="kelasDownload">7G</label>
+<label><input type="checkbox" value="7H" class="kelasDownload">7H</label>
+<label><input type="checkbox" value="7I" class="kelasDownload">7I</label>
+</div>
+
+<button class="btn-download" onclick="downloadCSV()">Download</button>
+
+</div>
+
+<!-- ===== TABEL ===== -->
+<div class="card">
+
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>No</th>
+<th>Nama</th>
+<th>Nilai</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+
+<div id="rekap"></div>
+
+</div>
+
+</div>
+
+<script>
+
+// ===== DATA =====
+let dataSiswa = [
+
+{kelas:"7A",no:1,nama:"Andi",nilai:{}},
+{kelas:"7A",no:2,nama:"Budi",nilai:{}},
+{kelas:"7A",no:3,nama:"Citra",nilai:{}},
+
+{kelas:"7B",no:1,nama:"Dedi",nilai:{}},
+{kelas:"7B",no:2,nama:"Eka",nilai:{}},
+{kelas:"7B",no:3,nama:"Fajar",nilai:{}},
+
+{kelas:"7C",no:1,nama:"Gita",nilai:{}},
+{kelas:"7C",no:2,nama:"Hadi",nilai:{}},
+{kelas:"7C",no:3,nama:"Indah",nilai:{}},
+
+{kelas:"7D",no:1,nama:"Joko",nilai:{}},
+{kelas:"7D",no:2,nama:"Kiki",nilai:{}},
+{kelas:"7D",no:3,nama:"Lina",nilai:{}},
+
+{kelas:"7E",no:1,nama:"Maya",nilai:{}},
+{kelas:"7E",no:2,nama:"Nanda",nilai:{}},
+{kelas:"7E",no:3,nama:"Oki",nilai:{}},
+
+{kelas:"7F",no:1,nama:"Putri",nilai:{}},
+{kelas:"7F",no:2,nama:"Rian",nilai:{}},
+{kelas:"7F",no:3,nama:"Siti",nilai:{}},
+
+{kelas:"7G",no:1,nama:"Tono",nilai:{}},
+{kelas:"7G",no:2,nama:"Umi",nilai:{}},
+{kelas:"7G",no:3,nama:"Vina",nilai:{}},
+
+{kelas:"7H",no:1,nama:"Wahyu",nilai:{}},
+{kelas:"7H",no:2,nama:"Yani",nilai:{}},
+{kelas:"7H",no:3,nama:"Zaki",nilai:{}},
+
+{kelas:"7I",no:1,nama:"Alya",nilai:{}},
+{kelas:"7I",no:2,nama:"Bagas",nilai:{}},
+{kelas:"7I",no:3,nama:"Cindy",nilai:{}}
+
+];
+
+let dataKKM = {};
+
+// ===== STORAGE =====
+function save(){
+localStorage.setItem("nilai", JSON.stringify(dataSiswa));
+localStorage.setItem("kkm", JSON.stringify(dataKKM));
+alert("Data tersimpan ✅");
+}
+
+function load(){
+const d = localStorage.getItem("nilai");
+const k = localStorage.getItem("kkm");
+if(d) dataSiswa = JSON.parse(d);
+if(k) dataKKM = JSON.parse(k);
+}
+
+// ===== CLEAR =====
+function clearData(){
+if(confirm("Hapus semua data?")){
+dataSiswa.forEach(d => d.nilai = {});
+dataKKM = {};
+save();
+render();
+}
+}
+
+// ===== SEARCH =====
+function resetSearch(){
+document.getElementById("search").value = "";
+render();
+}
+
+// ===== RENDER =====
+function render(){
+
+const k = kelas.value;
+const p = pertemuan.value;
+const key = document.getElementById("search").value.toLowerCase();
+
+kkmKelas.value = dataKKM[k] || "";
+
+let html = "";
+
+dataSiswa.forEach((d,i)=>{
+if(d.kelas === k && d.nama.toLowerCase().includes(key)){
+
+const val = d.nilai[p] || "";
+
+html += `
+<tr>
+<td>${d.no}</td>
+<td>${d.nama}</td>
+<td>
+<input type="number" value="${val}" 
+onchange="setNilai(${i},this.value)">
+</td>
+</tr>`;
+}
+});
+
+document.getElementById("tbody").innerHTML = html;
+
+buatRekap(k);
+}
+
+// ===== INPUT NILAI =====
+function setNilai(i,val){
+dataSiswa[i].nilai[pertemuan.value] = val;
+localStorage.setItem("nilai", JSON.stringify(dataSiswa));
+}
+
+// ===== SET KKM =====
+kkmKelas.onchange = function(){
+dataKKM[kelas.value] = parseInt(this.value || 0);
+save();
+render();
+};
+
+// ===== REKAP =====
+function buatRekap(k){
+
+const KKM = dataKKM[k] || 0;
+
+let data = dataSiswa
+.filter(d => d.kelas === k)
+.map(d => {
+
+let total=0, count=0;
+
+for(let i=1;i<=30;i++){
+let n = d.nilai[i];
+if(n){ total += parseInt(n); count++; }
+}
+
+let rata = count ? (total/count).toFixed(1) : 0;
+let status = rata >= KKM ? "Tuntas" : "Tidak";
+
+return {...d, rata:parseFloat(rata), status};
+
+});
+
+// sort + rank
+data.sort((a,b)=>b.rata-a.rata);
+
+let rank=1;
+data.forEach((d,i)=>{
+if(i>0 && d.rata < data[i-1].rata) rank++;
+d.rank = rank;
+});
+
+// tampil
+let html = "<br><b>Rekap Nilai</b><div class='table-container'><table><tr>";
+html += "<th>No</th><th>Nama</th>";
+
+for(let i=1;i<=30;i++) html += "<th>"+i+"</th>";
+
+html += "<th>Rata</th><th>Status</th><th>Rank</th></tr>";
+
+data.forEach(d=>{
+
+const warna = d.status === "Tuntas" ? "green" : "red";
+
+html += `<tr>
+<td>${d.no}</td>
+<td>${d.nama}</td>`;
+
+for(let i=1;i<=30;i++){
+html += `<td>${d.nilai[i] || ""}</td>`;
+}
+
+html += `
+<td>${d.rata}</td>
+<td style="color:${warna}">${d.status}</td>
+<td>${d.rank}</td>
+</tr>`;
+});
+
+html += "</table></div>";
+
+document.getElementById("rekap").innerHTML = html;
+}
+
+// ===== DOWNLOAD ANDROID =====
+function downloadCSV(){
+
+let kelasDipilih = [];
+
+document.querySelectorAll(".kelasDownload:checked")
+.forEach(cb => kelasDipilih.push(cb.value));
+
+if(kelasDipilih.length === 0){
+alert("Pilih kelas!");
+return;
+}
+
+let csv = "";
+
+kelasDipilih.forEach(k => {
+
+const KKM = dataKKM[k] || 0;
+
+csv += "KELAS " + k + "\n";
+csv += "NO;NAMA;";
+
+for(let i=1;i<=30;i++) csv += i + ";";
+
+csv += "RATA;STATUS;RANK\n";
+
+let data = dataSiswa
+.filter(d => d.kelas === k)
+.map(d => {
+
+let total=0, count=0;
+
+for(let i=1;i<=30;i++){
+let n = d.nilai[i];
+if(n){ total += parseInt(n); count++; }
+}
+
+let rata = count ? (total/count).toFixed(1) : 0;
+let status = rata >= KKM ? "Tuntas" : "Tidak";
+
+return {...d, rata:parseFloat(rata), status};
+
+});
+
+data.sort((a,b)=>b.rata-a.rata);
+
+let rank=1;
+data.forEach((d,i)=>{
+if(i>0 && d.rata < data[i-1].rata) rank++;
+d.rank=rank;
+});
+
+data.forEach(d=>{
+let row = `${d.no};${d.nama};`;
+for(let i=1;i<=30;i++){
+row += (d.nilai[i] || "") + ";";
+}
+row += `${d.rata};${d.status};${d.rank}`;
+csv += row + "\n";
+});
+
+csv += "\n\n";
+
+});
+
+Android.downloadCSV(csv);
+}
+
+// ===== INIT =====
+window.onload = function(){
+load();
+render();
+};
+
+</script>
+
+</body>
+</html>
