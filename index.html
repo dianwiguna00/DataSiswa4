@@ -322,9 +322,20 @@ let dataKKM = {};
 
 // ===== STORAGE =====
 function save(){
-localStorage.setItem("nilai", JSON.stringify(dataSiswa));
-localStorage.setItem("kkm", JSON.stringify(dataKKM));
-alert("Data tersimpan ✅");
+
+    localStorage.setItem(
+        "nilai",
+        JSON.stringify(dataSiswa)
+    );
+
+    localStorage.setItem(
+        "kkm",
+        JSON.stringify(dataKKM)
+    );
+
+    render(); // langsung refresh tabel & rekap
+
+    alert("Data tersimpan ✅");
 }
 
 function load(){
