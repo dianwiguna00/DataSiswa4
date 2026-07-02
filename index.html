@@ -7,73 +7,178 @@
 
 <style>
 
-/* ===== GLOBAL ===== */
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    background: #f4f6f9;
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-size:20px;
 }
 
-.header {
-    background: #28a745;
-    color: white;
-    padding: 12px;
-    text-align: center;
-    font-weight: bold;
+
+body{
+    font-family:'Segoe UI',Tahoma,sans-serif;
+    background:#eef2f7;
+    color:#333;
 }
 
-.container {
-    padding: 10px;
+.header{
+    background:linear-gradient(135deg,#198754,#157347);
+    color:white;
+    text-align:center;
+    padding:20px;
+    font-size:24px;
+    font-weight:600;
+    letter-spacing:1px;
+    box-shadow:0 4px 12px rgba(0,0,0,.15);
 }
 
-.card {
-    background: white;
-    padding: 12px;
-    margin-bottom: 10px;
-    border-radius: 10px;
+.container{
+    max-width:1300px;
+    margin:auto;
+    padding:20px;
 }
 
-/* ===== INPUT & BUTTON ===== */
-select, input {
-    width: 100%;
-    padding: 8px;
-    margin: 5px 0;
+.card{
+    background:white;
+    padding:20px;
+    margin-bottom:20px;
+    border-radius:16px;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
 }
 
-button {
-    width: 100%;
-    padding: 8px;
-    margin: 3px 0;
-    border: none;
-    border-radius: 5px;
-    color: white;
-    cursor: pointer;
+select,
+input{
+    width:100%;
+    padding:12px;
+    margin:6px 0;
+    border:1px solid #d6dce5;
+    border-radius:10px;
+    font-size:14px;
 }
 
-.btn-save { background: #28a745; }
-.btn-clear { background: #dc3545; }
-.btn-download { background: #007BFF; }
-
-/* ===== TABLE ===== */
-.table-container {
-    overflow-x: auto;
+select:focus,
+input:focus{
+    outline:none;
+    border-color:#198754;
+    box-shadow:0 0 0 3px rgba(25,135,84,.15);
 }
 
-table {
-    min-width: 900px;
-    border-collapse: collapse;
+button{
+    width:100%;
+    padding:12px;
+    margin:5px 0;
+    border:none;
+    border-radius:10px;
+    color:white;
+    font-weight:600;
+    cursor:pointer;
+    transition:.3s;
 }
 
-th, td {
-    border: 1px solid #ddd;
-    padding: 6px;
-    text-align: center;
-    font-size: 12px;
+button:hover{
+    transform:translateY(-2px);
 }
 
-th {
-    background: #007BFF;
-    color: white;
+.btn-save{
+    background:#198754;
+}
+
+.btn-clear{
+    background:#dc3545;
+}
+
+.btn-download{
+    background:#0d6efd;
+}
+
+.table-container{
+    overflow:auto;
+    border-radius:12px;
+}
+
+table{
+    width:100%;
+    min-width:900px;
+    border-collapse:collapse;
+}
+
+th{
+    background:#0d6efd;
+    color:white;
+    padding:12px;
+    position:sticky;
+    top:0;
+}
+
+td{
+    padding:10px;
+    border-bottom:1px solid #eee;
+    text-align:center;
+}
+
+tr:nth-child(even){
+    background:#f8f9fa;
+}
+
+tr:hover{
+    background:#e9f2ff;
+}
+
+.stats{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:15px;
+    margin-bottom:20px;
+}
+
+.stat-card{
+    background:white;
+    padding:20px;
+    border-radius:16px;
+    text-align:center;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+}
+
+.stat-card h2{
+    font-size:34px;
+    color:#198754;
+}
+
+.stat-card p{
+    color:#666;
+}
+
+.kelas-box{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(80px,1fr));
+    gap:8px;
+    margin-top:15px;
+}
+
+.kelas-box label{
+    background:#f8f9fa;
+    border:1px solid #ddd;
+    border-radius:10px;
+    padding:10px;
+}
+
+#rekap{
+    margin-top:20px;
+}
+
+.footer{
+    padding:20px;
+    text-align:center;
+    color:#777;
+    font-size:13px;
+}
+
+@media(max-width:768px){
+
+    .header{
+        font-size:20px;
+    }
+
 }
 
 </style>
@@ -84,6 +189,30 @@ th {
 <div class="header">INPUT NILAI SISWA</div>
 
 <div class="container">
+
+<div class="stats">
+
+    <div class="stat-card">
+        <h2 id="totalSiswa">0</h2>
+        <p>Jumlah Siswa</p>
+    </div>
+
+    <div class="stat-card">
+        <h2 id="rataKelas">0</h2>
+        <p>Rata-rata Kelas</p>
+    </div>
+
+    <div class="stat-card">
+        <h2 id="jmlTuntas">0</h2>
+        <p>Tuntas</p>
+    </div>
+
+    <div class="stat-card">
+        <h2 id="jmlTidak">0</h2>
+        <p>Belum Tuntas</p>
+    </div>
+
+</div>
 
 <!-- ===== FORM ===== -->
 <div class="card">
@@ -293,6 +422,39 @@ return {...d, rata:parseFloat(rata), status};
 // sort + rank
 data.sort((a,b)=>b.rata-a.rata);
 
+let totalNilai = 0;
+let jumlahData = data.length;
+let tuntas = 0;
+let tidak = 0;
+
+data.forEach(d=>{
+
+    totalNilai += d.rata;
+
+    if(d.status=="Tuntas"){
+        tuntas++;
+    }else{
+        tidak++;
+    }
+
+});
+
+let rataKelas =
+jumlahData ?
+(totalNilai/jumlahData).toFixed(1) : 0;
+
+document.getElementById("totalSiswa").innerText =
+jumlahData;
+
+document.getElementById("rataKelas").innerText =
+rataKelas;
+
+document.getElementById("jmlTuntas").innerText =
+tuntas;
+
+document.getElementById("jmlTidak").innerText =
+tidak;
+
 let rank=1;
 data.forEach((d,i)=>{
 if(i>0 && d.rata < data[i-1].rata) rank++;
@@ -406,6 +568,8 @@ render();
 };
 
 </script>
-
+<div class="footer">
+© 2026 Sistem Pengolahan Nilai Peserta Didik
+</div>
 </body>
 </html>
